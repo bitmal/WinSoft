@@ -28,15 +28,79 @@ void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::Color32 color)
 
 void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::Color32 color, WinSoft::Surface surface)
 {
+	WinSoft::PColor32 c{};
+	PColor(color, c);
+
 	/* Bresanham's Line Midpoint Algorithm */
 	int dx = (int)b._x - a._x;
 	int dy = (int)b._y - a._y;
 	int dxAbs = abs(dx);
 	int dyAbs = abs(dy);
 
-	WinSoft::PColor32 c{};
-	PColor(color, c);
+	// Edge Case: zero magnitude
+	if (!dx && !dy)
+	{
+		printf("DrawLine(line: %d): no magnitude\n", __LINE__);
+		return;
+	}		
 
+	// Edge Case: 1 row
+	if (!dyAbs)
+	{		
+		for (int x = a._x; dx>0 ? x<=b._x : x>=b._x; dx>0 ? ++x : --x)
+		{
+			int y = a._y;
+			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
+
+			BYTE* pixel = (BYTE*)surface._data;
+			pixel[index+3] = c;
+			pixel[index+2] = c >> 8;
+			pixel[index+1] = c >> 16;
+			pixel[index] = c >> 24;
+		}
+
+		return;
+	}
+
+	// Edge Case: 1 column
+	if (!dxAbs)
+	{
+		for (int y = a._y; dy>0 ? y<=b._y : y>=b._y; dy>0 ? ++y : --y)
+		{
+			int x = a._x;
+			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
+
+			BYTE* pixel = (BYTE*)surface._data;
+			pixel[index+3] = c;
+			pixel[index+2] = c >> 8;
+			pixel[index+1] = c >> 16;
+			pixel[index] = c >> 24;
+		}
+
+		return;
+	}
+
+	// Edge Case: columns == rows
+	if (dxAbs == dyAbs)
+	{
+		for (int delta = 0; delta <= dxAbs; ++delta)
+		{
+			int x = a._x + (dx > 0 ? delta : -delta);
+			int y = a._y + (dy > 0 ? delta : -delta);
+
+			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
+
+			BYTE* pixel = (BYTE*)surface._data;
+			pixel[index+3] = c;
+			pixel[index+2] = c >> 8;
+			pixel[index+1] = c >> 16;
+			pixel[index] = c >> 24;
+		}
+
+		return;
+	}
+
+	// Edge Case: columns != rows
 	// QUADRANT: UP-RIGHT
 	if (dx > 0 && dy > 0)
 	{
