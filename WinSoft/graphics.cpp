@@ -239,6 +239,60 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::Color32 colo
 	}
 }
 
+void WinSoft::DrawRect(Rect rect, ColorBorder border, Surface surface)
+{
+	
+}
+
+void WinSoft::FillRect(Rect rect, const ColorBorder* border, Color32 fillColor, Surface surface)
+{
+	PColor32 bC = 0;
+	PColor32 fC = 0;
+	PColor32 color = 0;
+
+	PColor(border->_color, bC);
+	PColor(fillColor, fC);
+
+	int lX = (int)rect._bottomLeft._x - (border->_type == ColorBorder::OUTSET ? border->_width: 0);
+	int rX = (int)rect._topRight._x + (border->_type == ColorBorder::OUTSET ? border->_width : 0);
+	int bY = (int)rect._bottomLeft._y - (border->_type == ColorBorder::OUTSET ? border->_width : 0);
+	int tY = (int)rect._topRight._y + (border->_type == ColorBorder::OUTSET ? border->_width : 0);
+
+	for (int y = bY; y <= tY; ++y)
+	{
+		for (int x = lX; x <= rX; ++x)
+		{
+			int index = (x + (y * ((int)surface._rect._topRight._x)))*sizeof(fC);
+			color = fC;
+
+			if (border->_type != border->NONE)
+			{
+				if ((x <= (lX + border->_width) && x >= lX) ||
+					(x >= (rX - border->_width) && x <= rX) ||
+					(y <= (bY + border->_width) && y >= bY) ||
+					(y >= (tY - border->_width) && y <= tY))
+				{
+					color = bC;
+				}
+			}
+
+			BYTE* pixel = ((BYTE*)surface._data);
+			pixel[index+3] = color;
+			pixel[index+2] = color >> 8;
+			pixel[index+1] = color >> 16;
+			pixel[index] = color >> 24;
+		}
+	}
+}
+
+void WinSoft::FColor(const WinSoft::PColor32& pcolor, WinSoft::Color32& fcolor)
+{
+	fcolor._r = (float)(pcolor & 0x00FF0000)/0xFF;
+	fcolor._g = (float)(pcolor & 0x0000FF00)/0xFF;
+	fcolor._b = (float)(pcolor & 0x000000FF)/0xFF;
+	fcolor._a = (float)(pcolor & 0xFF000000)/0xFF;
+}
+
 void WinSoft::PColor(const WinSoft::Color32& color, WinSoft::PColor32& pcolor)
 {
 	pcolor = (((BYTE)(255*color._b)) << 24) |
