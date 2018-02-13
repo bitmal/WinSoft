@@ -3,13 +3,13 @@
 
 #include <cmath>
 
-void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::Color32 color)
+void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 {
 	int width = (int)(surface._rect._topRight._x);
 	int height = (int)(surface._rect._topRight._y);
 
-	PColor32 c = 0;
-	PColor(color, c);
+	Color32 c = 0;
+	ToColor(color, c);
 
 	for (int y = 0; y < height; ++y)
 	{
@@ -26,12 +26,12 @@ void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::Color32 color)
 	}
 }
 
-void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::Color32 color, WinSoft::Surface surface)
+void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 color, WinSoft::Surface surface)
 {
-	WinSoft::PColor32 c{};
-	PColor(color, c);
+	WinSoft::Color32 c{};
+	ToColor(color, c);
 
-	/* Bresanham's Line Midpoint Algorithm */
+	/* Line Midpoint Algorithm */
 	int dx = (int)b._x - a._x;
 	int dy = (int)b._y - a._y;
 	int dxAbs = abs(dx);
@@ -239,19 +239,27 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::Color32 colo
 	}
 }
 
-void WinSoft::DrawRect(Rect rect, ColorBorder border, Surface surface)
+void WinSoft::DrawRect(Rect rect, FColor32 color, Surface surface)
 {
-	
+	float lX = rect._bottomLeft._x;
+	float rX = rect._topRight._x;
+	float bY = rect._bottomLeft._y; 
+	float tY = rect._topRight._y;
+
+	DrawLine(Point{lX, bY}, Point{lX, tY}, color, surface);
+	DrawLine(Point{lX, tY}, Point{rX, tY}, color, surface);
+	DrawLine(Point{rX, tY}, Point{rX, bY}, color, surface);
+	DrawLine(Point{rX, bY}, Point{lX, bY}, color, surface);
 }
 
-void WinSoft::FillRect(Rect rect, const ColorBorder* border, Color32 fillColor, Surface surface)
+void WinSoft::FillRect(Rect rect, const ColorBorder* border, FColor32 fillColor, Surface surface)
 {
-	PColor32 bC = 0;
-	PColor32 fC = 0;
-	PColor32 color = 0;
+	Color32 bC = 0;
+	Color32 fC = 0;
+	Color32 color = 0;
 
-	PColor(border->_color, bC);
-	PColor(fillColor, fC);
+	ToColor(border->_color, bC);
+	ToColor(fillColor, fC);
 
 	int lX = (int)rect._bottomLeft._x - (border->_type == ColorBorder::OUTSET ? border->_width: 0);
 	int rX = (int)rect._topRight._x + (border->_type == ColorBorder::OUTSET ? border->_width : 0);
@@ -262,7 +270,7 @@ void WinSoft::FillRect(Rect rect, const ColorBorder* border, Color32 fillColor, 
 	{
 		for (int x = lX; x <= rX; ++x)
 		{
-			int index = (x + (y * ((int)surface._rect._topRight._x)))*sizeof(fC);
+			int index = (x + (y * ((int)surface._rect._topRight._x)))*sizeof(color);
 			color = fC;
 
 			if (border->_type != border->NONE)
@@ -285,15 +293,130 @@ void WinSoft::FillRect(Rect rect, const ColorBorder* border, Color32 fillColor, 
 	}
 }
 
-void WinSoft::FColor(const WinSoft::PColor32& pcolor, WinSoft::Color32& fcolor)
+void WinSoft::DrawCircle(Point center, float radius, FColor32 color, Surface surface)
 {
-	fcolor._r = (float)(pcolor & 0x00FF0000)/0xFF;
-	fcolor._g = (float)(pcolor & 0x0000FF00)/0xFF;
-	fcolor._b = (float)(pcolor & 0x000000FF)/0xFF;
-	fcolor._a = (float)(pcolor & 0xFF000000)/0xFF;
+	/*float maxY = center._y + DEGREES_TO_RADIANS(45)*radius;
+	float x = center._x;
+	float y = center._y;
+
+	Color32 col = 0;
+	ToColor(color, col);
+
+	for(int deg = 0; deg <= 45; ++deg)
+	{
+		y = DEGREES_TO_RADIANS(deg)*radius;
+		x = sqrt((radius*radius)-(y*y));
+		x = roundf(x+center._x);
+		y = roundf(y+center._y);
+
+		int index = (x + (y * ((int)surface._rect._topRight._x)))*sizeof(col);
+		printf("%f, %f\n", x, y);
+
+		BYTE* pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+	}*/
+	
+	Color32 col = 0;
+	ToColor(color, col);
+
+	// Circle-Midpoint Algorithm
+	int x = (int)radius-1;
+	int y = 0;
+	int dx = 1;
+	int dy = 1;
+	int err = dx - ((int)radius << 1);
+
+	while (x >= y)
+	{
+		int index = (center._x+x + ((center._y+y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		BYTE* pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x+y + ((center._y+x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x-y + ((center._y+x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x-x + ((center._y+y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x-x + ((center._y-y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x-y + ((center._y-x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x+y + ((center._y-x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		index = (center._x+x + ((center._y-y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		pixel = ((BYTE*)surface._data);
+		pixel[index+3] = col;
+		pixel[index+2] = col >> 8;
+		pixel[index+1] = col >> 16;
+		pixel[index] = col >> 24;
+
+		if (err <= 0)
+		{
+			y++;
+			err += dy;
+			dy += 2;
+		}
+
+		if (err > 0)
+		{
+			x--;
+			dx += 2;
+			err += dx - ((int)radius << 1);
+		}
+	}
 }
 
-void WinSoft::PColor(const WinSoft::Color32& color, WinSoft::PColor32& pcolor)
+void WinSoft::FillCircle(Point center, float radius, FColor32 color, Surface surface)
+{
+	
+}
+
+void WinSoft::ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor)
+{
+	fcolor._r = (float)(pcolor & (0xFF<<8)) / (0xFF<<8);
+	fcolor._g = (float)(pcolor & (0xFF<<16)) / (0xFF<<16);
+	fcolor._b = (float)(pcolor & (0xFF<<24)) / (0xFF<<24);
+	fcolor._a = (float)(pcolor & (0xFF)) / (0xFF);
+}
+
+void WinSoft::ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor)
 {
 	pcolor = (((BYTE)(255*color._b)) << 24) |
 		     (((BYTE)(255*color._g)) << 16) |

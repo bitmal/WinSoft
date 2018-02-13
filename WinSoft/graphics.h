@@ -3,6 +3,10 @@
 
 namespace WinSoft
 {
+	#define PI 3.14159265
+	#define RADIANS_TO_DEGREES(x) x*180/PI
+	#define DEGREES_TO_RADIANS(x) x*PI/180
+
 	struct Point
 	{
 		float _x, _y;
@@ -14,8 +18,8 @@ namespace WinSoft
 		Point _topRight;
 	};
 	
-	typedef unsigned int PColor32;
-	struct Color32
+	typedef unsigned int Color32;
+	struct FColor32
 	{
 		float _r, _g, _b, _a;
 	};
@@ -27,7 +31,7 @@ namespace WinSoft
 			INSET, OUTSET, NONE = -1
 		};
 
-		Color32 _color;
+		FColor32 _color;
 		BorderType _type;
 		unsigned int _width;
 	};
@@ -38,14 +42,16 @@ namespace WinSoft
 		void* _data;
 	};
 
-	void RefreshSurface(Surface surface, Color32 color);
+	void RefreshSurface(Surface surface, FColor32 color);
 
-	void DrawLine(Point a, Point b, Color32 color, Surface surface);	
-	void DrawRect(Rect rect, ColorBorder border, Surface surface);
-	void FillRect(Rect rect, const ColorBorder* border, Color32 fillColor, Surface surface);
+	void DrawLine(Point a, Point b, FColor32 color, Surface surface);	
+	void DrawRect(Rect rect, FColor32 color, Surface surface);
+	void FillRect(Rect rect, const ColorBorder* border, FColor32 fillColor, Surface surface);
+	void DrawCircle(Point center, float radius, FColor32 color, Surface surface);
+	void FillCircle(Point center, float radius, FColor32 color, Surface surface);
 
-	void FColor(const WinSoft::PColor32& pcolor, WinSoft::Color32& fcolor);
-	void PColor(const WinSoft::Color32& color, WinSoft::PColor32& pcolor);
+	void ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor);
+	void ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor);
 }
 
 #endif
