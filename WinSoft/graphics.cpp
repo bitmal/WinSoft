@@ -32,8 +32,8 @@ void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 {
 	/* Line Midpoint Algorithm */
-	int dx = (int)b._point._x - a._point._x;
-	int dy = (int)b._point._y - a._point._y;
+	int dx = (int)b._point._x - (int)a._point._x;
+	int dy = (int)b._point._y - (int)a._point._y;
 	int dxAbs = abs(dx);
 	int dyAbs = abs(dy);
 	float magnitude = Magnitude(a._point, b._point);
@@ -48,16 +48,16 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 	// Edge Case: 1 row
 	if (!dyAbs)
 	{		
-		for (int x = a._point._x; dx>0 ? x<=b._point._x : x>=b._point._x; dx>0 ? ++x : --x)
+		for (int x = (int)a._point._x; dx>0 ? x<=(int)b._point._x : x>=(int)b._point._x; dx>0 ? ++x : --x)
 		{			
-			int y = a._point._y;
+			int y = (int)a._point._y;
 
 			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
 			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
 			Color32 c;
 			ToColor(lerp, c);
 
-			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
+			int index = (int)(x + (y*surface._rect._topRight._x))*sizeof(c);
 
 			BYTE* pixel = (BYTE*)surface._data;
 			pixel[index+3] = c;
@@ -72,16 +72,16 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 	// Edge Case: 1 column
 	if (!dxAbs)
 	{
-		for (int y = a._point._y; dy>0 ? y<=b._point._y : y>=b._point._y; dy>0 ? ++y : --y)
+		for (int y = (int)a._point._y; dy>0 ? y<=(int)b._point._y : y>=(int)b._point._y; dy>0 ? ++y : --y)
 		{
-			int x = a._point._x;
+			int x = (int)a._point._x;
 
 			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
 			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
 			Color32 c;
 			ToColor(lerp, c);
 
-			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
+			int index = (int)(x + (y*surface._rect._topRight._x))*sizeof(c);
 
 			BYTE* pixel = (BYTE*)surface._data;
 			pixel[index+3] = c;
@@ -98,15 +98,15 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 	{
 		for (int delta = 0; delta <= dxAbs; ++delta)
 		{
-			int x = a._point._x + (dx > 0 ? delta : -delta);
-			int y = a._point._y + (dy > 0 ? delta : -delta);
+			int x = (int)a._point._x + (dx > 0 ? delta : -delta);
+			int y = (int)a._point._y + (dy > 0 ? delta : -delta);
 
 			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
 			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
 			Color32 c;
 			ToColor(lerp, c);
 
-			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
+			int index = (int)(x + (y*surface._rect._topRight._x))*sizeof(c);
 
 			BYTE* pixel = (BYTE*)surface._data;
 			pixel[index+3] = c;
@@ -125,7 +125,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// COLUMN-MAJOR
 		if (dx > dy)
 		{			
-			for (int x = a._point._x; x <= b._point._x; ++x)
+			for (int x = (int)a._point._x; x <= (int)b._point._x; ++x)
 			{
 				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
 
@@ -134,7 +134,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -146,7 +146,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// ROW-MAJOR
 		else if (dy > dx)
 		{
-			for (int y = a._point._y; y <= b._point._y; ++y)
+			for (int y = (int)a._point._y; y <= (int)b._point._y; ++y)
 			{
 				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
 
@@ -155,7 +155,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -171,7 +171,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// COLUMN-MAJOR
 		if (dxAbs > dy)
 		{
-			for (int x = a._point._x; x >= b._point._x; --x)
+			for (int x = (int)a._point._x; x >= (int)b._point._x; --x)
 			{
 				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
 
@@ -180,7 +180,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -192,7 +192,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// ROW-MAJOR
 		else if (dy > dxAbs)
 		{			
-			for (int y = a._point._y; y <= b._point._y; ++y)
+			for (int y = (int)a._point._y; y <= (int)b._point._y; ++y)
 			{
 				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
 
@@ -201,7 +201,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -217,7 +217,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// COLUMN-MAJOR
 		if (dx < dy)
 		{
-			for (int x = a._point._x; x >= b._point._x; --x)
+			for (int x = (int)a._point._x; x >= (int)b._point._x; --x)
 			{
 				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
 
@@ -226,7 +226,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -238,7 +238,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// ROW-MAJOR
 		else if (dy < dx)
 		{
-			for (int y = a._point._y; y >= b._point._y; --y)
+			for (int y = (int)a._point._y; y >= (int)b._point._y; --y)
 			{
 				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
 
@@ -247,7 +247,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -263,7 +263,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// COLUMN-MAJOR
 		if (dx > dyAbs)
 		{
-			for (int x = a._point._x; x <= b._point._x; ++x)
+			for (int x = (int)a._point._x; x <= (int)b._point._x; ++x)
 			{
 				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
 
@@ -272,7 +272,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -284,7 +284,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		// ROW-MAJOR
 		else if (dyAbs > dx)
 		{
-			for (int y = a._point._y; y >= b._point._y; --y)
+			for (int y = (int)a._point._y; y >= (int)b._point._y; --y)
 			{
 				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
 
@@ -293,7 +293,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 				Color32 c;
 				ToColor(lerp, c);
 
-				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
+				int index = (int)(x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
 				pixel[index+3] = c;
@@ -341,7 +341,7 @@ void WinSoft::FillRect(Rect rect, const ColorBorder* border, FColor32 fillColor,
 	{
 		for (int x = lX; x <= rX; ++x)
 		{
-			int index = (x + (y * ((int)surface._rect._topRight._x)))*sizeof(color);
+			int index = (int)(x + (y * (surface._rect._topRight._x)))*sizeof(color);
 			color = fC;
 
 			if (border->_type != border->NONE)
@@ -402,56 +402,56 @@ void WinSoft::DrawCircle(Point center, float radius, FColor32 color, Surface sur
 
 	while (x >= y)
 	{
-		int index = (center._x+x + ((center._y+y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		int index = (int)(center._x+x + ((center._y+y) * (surface._rect._topRight._x)))*sizeof(col);
 		BYTE* pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x+y + ((center._y+x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x+y + ((center._y+x) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x-y + ((center._y+x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x-y + ((center._y+x) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x-x + ((center._y+y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x-x + ((center._y+y) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x-x + ((center._y-y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x-x + ((center._y-y) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x-y + ((center._y-x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x-y + ((center._y-x) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x+y + ((center._y-x) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x+y + ((center._y-x) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
 		pixel[index+1] = col >> 16;
 		pixel[index] = col >> 24;
 
-		index = (center._x+x + ((center._y-y) * ((int)surface._rect._topRight._x)))*sizeof(col);
+		index = (int)(center._x+x + ((center._y-y) * (surface._rect._topRight._x)))*sizeof(col);
 		pixel = ((BYTE*)surface._data);
 		pixel[index+3] = col;
 		pixel[index+2] = col >> 8;
@@ -480,23 +480,25 @@ void WinSoft::FillCircle(Point center, float radius, FColor32 color, Surface sur
 }
 
 int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
-{
-	++_count;
-	
-	// TODO: Check if null, and allocate as necessary
-	if (!_objects)
+{	
+	// TODO: Should be preallocated block that expands as necessary(dynamic array),
+	// rather than reallocating block after every created object
+	Object* object = (Object*)(_objects ? realloc(_objects, sizeof(Object)*(_count+1)) : malloc(sizeof(Object)));
+
+	if (!object)
 	{
-		_objects = (Object*)malloc(sizeof(Object));
+		fprintf(stderr, "%s, line %d: Failure to (re)allocate block for object(s).\n", __FILE__, __LINE__);
+		return NOT_AN_OBJECT;
 	}
 	else
 	{
-		realloc(_objects, sizeof(Object)*_count);
-	}
+		_objects = object;
+		object[_count]._vertexCount = vertexCount;
+		object[_count]._type = type;
+		object[_count]._vertices = vertices;
 
-	Object* object = _objects + sizeof(Object)*(_count-1);
-	object->_vertexCount = vertexCount;
-	object->_type = type;
-	object->_vertices = vertices;
+		++_count;
+	}
 
 	return 0;
 }
@@ -505,7 +507,7 @@ void WinSoft::DrawObject(int id, Surface surface)
 {
 	if (id <= _count && _count > 0)
 	{
-		//TODO:
+		//TODO: Draw all primitive types
 		Object* object = _objects + sizeof(Object)*id;
 
 		switch (object->_type)

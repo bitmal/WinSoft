@@ -7,6 +7,8 @@ namespace WinSoft
 	#define RADIANS_TO_DEGREES(x) x*180/PI
 	#define DEGREES_TO_RADIANS(x) x*PI/180
 
+	#define NOT_AN_OBJECT -1
+
 	struct Point
 	{
 		float _x, _y;
@@ -51,7 +53,7 @@ namespace WinSoft
 
 		FColor32 _color;
 		BorderType _type;
-		unsigned int _width;
+		int _width;
 	};
 
 	struct Surface
