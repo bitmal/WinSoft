@@ -31,6 +31,9 @@ void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 
 void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 {
+	// TODO: Bresenham's for more efficiency
+	// TODO: Wu's line antialiasing
+	
 	/* Line Midpoint Algorithm */
 	int dx = (int)b._point._x - (int)a._point._x;
 	int dy = (int)b._point._y - (int)a._point._y;
@@ -487,7 +490,7 @@ int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
 
 	if (!object)
 	{
-		fprintf(stderr, "%s, line %d: Failure to (re)allocate block for object(s).\n", __FILE__, __LINE__);
+		fprintf(stderr, "%s, %s(), line %d: Failure to (re)allocate block for object(s).\n", __func__, __FILE__, __LINE__);
 		return NOT_AN_OBJECT;
 	}
 	else
@@ -505,15 +508,16 @@ int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
 
 void WinSoft::DrawObject(int id, Surface surface)
 {
-	if (id <= _count && _count > 0)
+	if (_count > 0 && id < _count)
 	{
 		//TODO: Draw all primitive types
-		Object* object = _objects + sizeof(Object)*id;
+		//TODO: Including points, line lists, triangle lists, triangle fans, etc.
+		Object* object = _objects + id;
 
 		switch (object->_type)
 		{
 		case Primitive::LINE:
-		{
+		{			
 			if (object->_vertexCount > 1)
 			{
 				for (int i = 0; i < object->_vertexCount-1; ++i)
@@ -522,12 +526,12 @@ void WinSoft::DrawObject(int id, Surface surface)
 				}
 			}
 		}
-		break;
+			break;
 		case Primitive::TRIANGLE:
 		{
 			if (object->_vertexCount > 2)
 			{
-				for (int i = 0; i < object->_vertexCount-2; ++i)
+				for (int i = 0; i < object->_vertexCount-2; i+=2)
 				{
 					DrawLine(object->_vertices[i], object->_vertices[i+1], surface);
 					DrawLine(object->_vertices[i+1], object->_vertices[i+2], surface);
@@ -535,7 +539,9 @@ void WinSoft::DrawObject(int id, Surface surface)
 				}
 			}
 		}
-		break;
+			break;
+		default:
+			break;
 		}
 	}	
 }
