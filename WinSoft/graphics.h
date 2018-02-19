@@ -24,6 +24,24 @@ namespace WinSoft
 		float _r, _g, _b, _a;
 	};
 
+	struct Vertex
+	{
+		Point _point;
+		FColor32 _color;
+	};
+
+	enum Primitive : int
+	{
+		POINT, LINE, TRIANGLE, QUAD
+	};
+
+	struct Object
+	{
+		Primitive _type;
+		int _vertexCount;
+		Vertex* _vertices;
+	};
+
 	struct ColorBorder
 	{
 		enum BorderType : int
@@ -44,14 +62,23 @@ namespace WinSoft
 
 	void RefreshSurface(Surface surface, FColor32 color);
 
-	void DrawLine(Point a, Point b, FColor32 color, Surface surface);	
+	void DrawLine(Vertex a, Vertex b, Surface surface);	
 	void DrawRect(Rect rect, FColor32 color, Surface surface);
 	void FillRect(Rect rect, const ColorBorder* border, FColor32 fillColor, Surface surface);
 	void DrawCircle(Point center, float radius, FColor32 color, Surface surface);
 	void FillCircle(Point center, float radius, FColor32 color, Surface surface);
 
+	int CreateObject(Vertex* vertices, int vertexCount, Primitive type);
+	void DrawObject(int id, Surface surface);
+	void DestroyObjects();
+
 	void ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor);
 	void ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor);
+
+	FColor32 LerpColor(FColor32 a, FColor32 b, float t);
+
+	float Clamp01(float value);
+	float Magnitude(Point a, Point b);
 }
 
 #endif

@@ -3,6 +3,9 @@
 
 #include <cmath>
 
+WinSoft::Object* _objects = NULL;
+int _count = 0;
+
 void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 {
 	int width = (int)(surface._rect._topRight._x);
@@ -26,19 +29,17 @@ void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 	}
 }
 
-void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 color, WinSoft::Surface surface)
+void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 {
-	WinSoft::Color32 c{};
-	ToColor(color, c);
-
 	/* Line Midpoint Algorithm */
-	int dx = (int)b._x - a._x;
-	int dy = (int)b._y - a._y;
+	int dx = (int)b._point._x - a._point._x;
+	int dy = (int)b._point._y - a._point._y;
 	int dxAbs = abs(dx);
 	int dyAbs = abs(dy);
+	float magnitude = Magnitude(a._point, b._point);
 
 	// Edge Case: zero magnitude
-	if (!dx && !dy)
+	if (!magnitude)
 	{
 		printf("DrawLine(line: %d): no magnitude\n", __LINE__);
 		return;
@@ -47,9 +48,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 	// Edge Case: 1 row
 	if (!dyAbs)
 	{		
-		for (int x = a._x; dx>0 ? x<=b._x : x>=b._x; dx>0 ? ++x : --x)
-		{
-			int y = a._y;
+		for (int x = a._point._x; dx>0 ? x<=b._point._x : x>=b._point._x; dx>0 ? ++x : --x)
+		{			
+			int y = a._point._y;
+
+			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+			Color32 c;
+			ToColor(lerp, c);
+
 			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
 
 			BYTE* pixel = (BYTE*)surface._data;
@@ -65,9 +72,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 	// Edge Case: 1 column
 	if (!dxAbs)
 	{
-		for (int y = a._y; dy>0 ? y<=b._y : y>=b._y; dy>0 ? ++y : --y)
+		for (int y = a._point._y; dy>0 ? y<=b._point._y : y>=b._point._y; dy>0 ? ++y : --y)
 		{
-			int x = a._x;
+			int x = a._point._x;
+
+			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+			Color32 c;
+			ToColor(lerp, c);
+
 			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
 
 			BYTE* pixel = (BYTE*)surface._data;
@@ -85,8 +98,13 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 	{
 		for (int delta = 0; delta <= dxAbs; ++delta)
 		{
-			int x = a._x + (dx > 0 ? delta : -delta);
-			int y = a._y + (dy > 0 ? delta : -delta);
+			int x = a._point._x + (dx > 0 ? delta : -delta);
+			int y = a._point._y + (dy > 0 ? delta : -delta);
+
+			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+			Color32 c;
+			ToColor(lerp, c);
 
 			int index = (x + (y*surface._rect._topRight._x))*sizeof(c);
 
@@ -107,9 +125,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// COLUMN-MAJOR
 		if (dx > dy)
 		{			
-			for (int x = a._x; x <= b._x; ++x)
+			for (int x = a._point._x; x <= b._point._x; ++x)
 			{
-				int y = lroundf((float)dy/dx*(x-a._x) + a._y);
+				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});	
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -122,9 +146,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// ROW-MAJOR
 		else if (dy > dx)
 		{
-			for (int y = a._y; y <= b._y; ++y)
+			for (int y = a._point._y; y <= b._point._y; ++y)
 			{
-				int x = lroundf((float)dx/dy*(y-a._y) + a._x);
+				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -141,9 +171,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// COLUMN-MAJOR
 		if (dxAbs > dy)
 		{
-			for (int x = a._x; x >= b._x; --x)
+			for (int x = a._point._x; x >= b._point._x; --x)
 			{
-				int y = lroundf((float)dy/dx*(x-a._x) + a._y);
+				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -156,9 +192,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// ROW-MAJOR
 		else if (dy > dxAbs)
 		{			
-			for (int y = a._y; y <= b._y; ++y)
+			for (int y = a._point._y; y <= b._point._y; ++y)
 			{
-				int x = lroundf((float)dx/dy*(y-a._y) + a._x);
+				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -175,9 +217,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// COLUMN-MAJOR
 		if (dx < dy)
 		{
-			for (int x = a._x; x >= b._x; --x)
+			for (int x = a._point._x; x >= b._point._x; --x)
 			{
-				int y = lroundf((float)dy/dx*(x-a._x) + a._y);
+				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -190,9 +238,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// ROW-MAJOR
 		else if (dy < dx)
 		{
-			for (int y = a._y; y >= b._y; --y)
+			for (int y = a._point._y; y >= b._point._y; --y)
 			{
-				int x = lroundf((float)dx/dy*(y-a._y) + a._x);
+				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -209,9 +263,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// COLUMN-MAJOR
 		if (dx > dyAbs)
 		{
-			for (int x = a._x; x <= b._x; ++x)
+			for (int x = a._point._x; x <= b._point._x; ++x)
 			{
-				int y = lroundf((float)dy/dx*(x-a._x) + a._y);
+				int y = lroundf((float)dy/dx*(x-a._point._x) + a._point._y);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -224,9 +284,15 @@ void WinSoft::DrawLine(WinSoft::Point a, WinSoft::Point b, WinSoft::FColor32 col
 		// ROW-MAJOR
 		else if (dyAbs > dx)
 		{
-			for (int y = a._y; y >= b._y; --y)
+			for (int y = a._point._y; y >= b._point._y; --y)
 			{
-				int x = lroundf((float)dx/dy*(y-a._y) + a._x);
+				int x = lroundf((float)dx/dy*(y-a._point._y) + a._point._x);
+
+				float distance = Magnitude(a._point, Point{(float)x, (float)y});			
+				FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
+				Color32 c;
+				ToColor(lerp, c);
+
 				int index = (x + (y *surface._rect._topRight._x))*sizeof(c);
 
 				BYTE* pixel = (BYTE*)surface._data;
@@ -246,10 +312,15 @@ void WinSoft::DrawRect(Rect rect, FColor32 color, Surface surface)
 	float bY = rect._bottomLeft._y; 
 	float tY = rect._topRight._y;
 
-	DrawLine(Point{lX, bY}, Point{lX, tY}, color, surface);
-	DrawLine(Point{lX, tY}, Point{rX, tY}, color, surface);
-	DrawLine(Point{rX, tY}, Point{rX, bY}, color, surface);
-	DrawLine(Point{rX, bY}, Point{lX, bY}, color, surface);
+	Vertex bottomLeft { Point{lX, bY}, color };
+	Vertex topLeft { Point{lX, tY}, color };
+	Vertex topRight { Point{rX, tY}, color };
+	Vertex bottomRight { Point{rX, bY}, color };
+
+	DrawLine(bottomLeft, topLeft, surface);
+	DrawLine(topLeft, topRight, surface);
+	DrawLine(topRight, bottomRight, surface);
+	DrawLine(bottomRight, bottomLeft, surface);
 }
 
 void WinSoft::FillRect(Rect rect, const ColorBorder* border, FColor32 fillColor, Surface surface)
@@ -405,7 +476,77 @@ void WinSoft::DrawCircle(Point center, float radius, FColor32 color, Surface sur
 
 void WinSoft::FillCircle(Point center, float radius, FColor32 color, Surface surface)
 {
+	// TODO:
+}
+
+int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
+{
+	++_count;
 	
+	// TODO: Check if null, and allocate as necessary
+	if (!_objects)
+	{
+		_objects = (Object*)malloc(sizeof(Object));
+	}
+	else
+	{
+		realloc(_objects, sizeof(Object)*_count);
+	}
+
+	Object* object = _objects + sizeof(Object)*(_count-1);
+	object->_vertexCount = vertexCount;
+	object->_type = type;
+	object->_vertices = vertices;
+
+	return 0;
+}
+
+void WinSoft::DrawObject(int id, Surface surface)
+{
+	if (id <= _count && _count > 0)
+	{
+		//TODO:
+		Object* object = _objects + sizeof(Object)*id;
+
+		switch (object->_type)
+		{
+		case Primitive::LINE:
+		{
+			if (object->_vertexCount > 1)
+			{
+				for (int i = 0; i < object->_vertexCount-1; ++i)
+				{
+					DrawLine(object->_vertices[i], object->_vertices[i+1], surface);
+				}
+			}
+		}
+		break;
+		case Primitive::TRIANGLE:
+		{
+			if (object->_vertexCount > 2)
+			{
+				for (int i = 0; i < object->_vertexCount-2; ++i)
+				{
+					DrawLine(object->_vertices[i], object->_vertices[i+1], surface);
+					DrawLine(object->_vertices[i+1], object->_vertices[i+2], surface);
+					DrawLine(object->_vertices[i+2], object->_vertices[i], surface);
+				}
+			}
+		}
+		break;
+		}
+	}	
+}
+
+void WinSoft::DestroyObjects()
+{
+	if (_objects)
+	{
+		free(_objects);
+		_objects = NULL;
+	}
+
+	_count = 0;	
 }
 
 void WinSoft::ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor)
@@ -422,4 +563,20 @@ void WinSoft::ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor)
 		     (((BYTE)(255*color._g)) << 16) |
 		     (((BYTE)(255*color._r)) << 8)  |
 		     ((BYTE)(255*color._a));
+}
+
+float WinSoft::Clamp01(float value)
+{
+	return value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
+}
+
+WinSoft::FColor32 WinSoft::LerpColor(FColor32 a, FColor32 b, float t)
+{
+	t = Clamp01(t);
+	return FColor32{a._r+(b._r - a._r)*t, a._g+(b._g - a._g)*t, a._b+(b._b - a._b)*t, a._a+(b._a - a._a)*t};
+}
+
+float WinSoft::Magnitude(Point a, Point b)
+{
+	return sqrt((b._x-a._x)*(b._x-a._x) + (b._y-a._y)*(b._y-a._y));
 }
