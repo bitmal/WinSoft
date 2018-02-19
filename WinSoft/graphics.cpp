@@ -500,7 +500,7 @@ int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
 		++_count;
 	}
 
-	return 0;
+	return _count-1;
 }
 
 void WinSoft::DrawObject(int id, Surface surface)
