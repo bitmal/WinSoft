@@ -2,8 +2,10 @@
 #include "graphics.h"
 
 #include <cmath>
+#include <cstdlib>
 
 WinSoft::Object* _objects = NULL;
+int*  _drawQueue = NULL;
 int _count = 0;
 
 void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
@@ -507,41 +509,26 @@ int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
 }
 
 void WinSoft::DrawObject(int id, Surface surface)
-{
+{		
 	if (_count > 0 && id < _count)
 	{
+		if (!_drawQueue)
+		{
+			_drawQueue = (int*)malloc(sizeof(int)*(MAX_OBJECTS + 1));
+			_drawQueue[0] = _drawQueue[MAX_OBJECTS] = NOT_AN_OBJECT;
+		}
+
 		//TODO: Draw all primitive types
 		//TODO: Including points, line lists, triangle lists, triangle fans, etc.
-		Object* object = _objects + id;
+		Object* object = _objects + id;		
 
-		switch (object->_type)
+		for (int i = 0; i < MAX_OBJECTS; ++i)
 		{
-		case Primitive::LINE:
-		{			
-			if (object->_vertexCount > 1)
+			if (_drawQueue[i] == NOT_AN_OBJECT)
 			{
-				for (int i = 0; i < object->_vertexCount-1; ++i)
-				{
-					DrawLine(object->_vertices[i], object->_vertices[i+1], surface);
-				}
+				_drawQueue[i] = id;
+				break;
 			}
-		}
-			break;
-		case Primitive::TRIANGLE:
-		{
-			if (object->_vertexCount > 2)
-			{
-				for (int i = 0; i < object->_vertexCount-2; i+=2)
-				{
-					DrawLine(object->_vertices[i], object->_vertices[i+1], surface);
-					DrawLine(object->_vertices[i+1], object->_vertices[i+2], surface);
-					DrawLine(object->_vertices[i+2], object->_vertices[i], surface);
-				}
-			}
-		}
-			break;
-		default:
-			break;
 		}
 	}	
 }
@@ -552,9 +539,82 @@ void WinSoft::DestroyObjects()
 	{
 		free(_objects);
 		_objects = NULL;
+
+		free(_drawQueue);
+		_drawQueue = NULL;
 	}
 
 	_count = 0;	
+}
+
+void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
+{
+	if (!settings._drawMode == NORMAL)
+	{
+
+	}
+	else
+	{
+		for (int i = 0; i < MAX_OBJECTS; ++i)
+		{
+			int id = _drawQueue[i];
+			
+			if (id == NOT_AN_OBJECT)
+				break;
+			
+			_drawQueue[i] = NOT_AN_OBJECT;
+
+			if (_count > 0 && id < _count)
+			{
+				//TODO: Draw all primitive types
+				//TODO: Including points, line lists, triangle lists, triangle fans, etc.
+				Object* object = _objects + id;
+
+				switch (object->_type)
+				{
+				case Primitive::LINE:
+				{
+					if (object->_vertexCount > 1)
+					{
+						for (int i = 0; i < object->_vertexCount - 1; ++i)
+						{
+							DrawLine(object->_vertices[i], object->_vertices[i + 1], surface);
+						}
+					}
+				}
+				break;
+				case Primitive::TRIANGLE:
+				{
+					if (object->_vertexCount > 2)
+					{
+						for (int i = 0; i < object->_vertexCount - 2; i += 2)
+						{
+							DrawLine(object->_vertices[i], object->_vertices[i + 1], surface);
+							DrawLine(object->_vertices[i + 1], object->_vertices[i + 2], surface);
+							DrawLine(object->_vertices[i + 2], object->_vertices[i], surface);
+						}
+					}
+				}
+				break;
+				case Primitive::TRIANGLE_STRIP:
+				{
+					if (object->_vertexCount > 2)
+					{
+						for (int i = 0; i < object->_vertexCount - 2; ++i)
+						{
+							DrawLine(object->_vertices[i], object->_vertices[i + 1], surface);
+							DrawLine(object->_vertices[i + 1], object->_vertices[i + 2], surface);
+							DrawLine(object->_vertices[i + 2], object->_vertices[i], surface);
+						}
+					}
+				}
+				break;
+				default:
+					break;
+				}
+			}
+		}		
+	}
 }
 
 void WinSoft::ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor)

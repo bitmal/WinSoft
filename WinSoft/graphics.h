@@ -7,6 +7,7 @@ namespace WinSoft
 	#define RADIANS_TO_DEGREES(x) x*180/PI
 	#define DEGREES_TO_RADIANS(x) x*PI/180
 
+	#define MAX_OBJECTS 255
 	#define NOT_AN_OBJECT -1
 
 	struct Point
@@ -18,6 +19,18 @@ namespace WinSoft
 	{
 		Point _bottomLeft;
 		Point _topRight;
+	};
+
+	enum Draw3DMode : int
+	{
+		NORMAL, WIREFRAME
+	};
+
+	struct Draw3DSettings
+	{
+		Draw3DMode _drawMode;
+		Rect _windowResolution;
+		bool _windowStretched;
 	};
 	
 	typedef unsigned int Color32;
@@ -34,7 +47,7 @@ namespace WinSoft
 
 	enum Primitive : int
 	{
-		POINT, LINE, TRIANGLE, QUAD
+		POINT, LINE, TRIANGLE, TRIANGLE_STRIP, QUAD
 	};
 
 	struct Object
@@ -73,6 +86,8 @@ namespace WinSoft
 	int CreateObject(Vertex* vertices, int vertexCount, Primitive type);
 	void DrawObject(int id, Surface surface);
 	void DestroyObjects();
+
+	void Draw3D(Draw3DSettings& settings, Surface surface);
 
 	void ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor);
 	void ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor);
