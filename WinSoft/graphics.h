@@ -75,6 +75,9 @@ namespace WinSoft
 		void* _data;
 	};
 
+	void Startup();
+	void Shutdown();
+
 	void RefreshSurface(Surface surface, FColor32 color);
 
 	void DrawLine(Vertex a, Vertex b, Surface surface);	
@@ -89,8 +92,6 @@ namespace WinSoft
 
 	void Draw3D(Draw3DSettings& settings, Surface surface);
 
-	void Startup();
-	void Shutdown();
 
 	void ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor);
 	void ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor);

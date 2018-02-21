@@ -55,7 +55,7 @@ void WinSoft::DrawLine(Vertex a, Vertex b, WinSoft::Surface surface)
 		for (int x = (int)a._point._x; dx>0 ? x<=(int)b._point._x : x>=(int)b._point._x; dx>0 ? ++x : --x)
 		{			
 			int y = (int)a._point._y;
-
+			
 			float distance = Magnitude(a._point, Point{(float)x, (float)y});			
 			FColor32 lerp = LerpColor(a._color, b._color, distance/magnitude);
 			Color32 c;
