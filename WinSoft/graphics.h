@@ -48,13 +48,7 @@ namespace WinSoft
 	enum Primitive : int
 	{
 		POINT, LINE, TRIANGLE, TRIANGLE_STRIP, QUAD
-	};
-
-	struct BufferObject
-	{
-		int _length;
-		void* _data;
-	};
+	};	
 
 	struct Object
 	{
@@ -91,16 +85,12 @@ namespace WinSoft
 
 	int CreateObject(int vbo, int ibo, Primitive type);
 	void DrawObject(int id);
-	void DestroyObjects();
-
-	int CreateVBO(Vertex* vertices, int length);
-	int CreateIBO(unsigned int* indices, int length);
-	BufferObject* MapVBO(int id);
-	BufferObject* MapIBO(int id);
-	void DeleteVBO(int id);
-	void DeleteIBO(int id);
+	void DestroyObjects();	
 
 	void Draw3D(Draw3DSettings& settings, Surface surface);
+
+	void Startup();
+	void Shutdown();
 
 	void ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor);
 	void ToColor(const WinSoft::FColor32& color, WinSoft::Color32& pcolor);

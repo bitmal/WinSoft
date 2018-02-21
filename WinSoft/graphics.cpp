@@ -1,16 +1,11 @@
 #include "stdafx.h"
-#include "graphics.h"
 
 #include <cmath>
 #include <cstdlib>
 
-WinSoft::BufferObject* _vboList = NULL;
-WinSoft::BufferObject* _iboList = NULL;
 WinSoft::Object* _objects = NULL;
 int*  _drawQueue = NULL;
 int _objectCount = 0;
-int _vboCount = 0;
-int _iboCount = 0;
 
 void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 {
@@ -515,13 +510,7 @@ int WinSoft::CreateObject(int vbo, int ibo, Primitive type)
 void WinSoft::DrawObject(int id)
 {		
 	if (_objectCount > 0 && id < _objectCount)
-	{
-		if (!_drawQueue)
-		{
-			_drawQueue = (int*)malloc(sizeof(int)*(MAX_OBJECTS + 1));
-			_drawQueue[0] = _drawQueue[MAX_OBJECTS] = NOT_AN_OBJECT;
-		}
-
+	{	
 		//TODO: Draw all primitive types
 		//TODO: Including points, line lists, triangle lists, triangle fans, etc.
 		Object* object = _objects + id;		
@@ -540,36 +529,6 @@ void WinSoft::DrawObject(int id)
 
 void WinSoft::DestroyObjects()
 {
-	if (_iboList)
-	{
-		for (int i = 0; i < _iboCount; ++i)
-		{			
-			if (_iboList[i]._data)
-			{
-				free(_iboList[i]._data);
-				_iboList[i]._data = NULL;
-			}
-		}
-
-		free(_iboList);
-		_iboList = NULL;
-	}
-
-	if (_vboList)
-	{
-		for (int i = 0; i < _vboCount; ++i)
-		{			
-			if (_vboList[i]._data)
-			{
-				free(_vboList[i]._data);
-				_vboList[i]._data = NULL;
-			}
-		}
-
-		free(_vboList);
-		_vboList = NULL;
-	}
-
 	if (_drawQueue)
 	{
 		free(_drawQueue);
@@ -585,80 +544,7 @@ void WinSoft::DestroyObjects()
 	_objectCount = 0;	
 }
 
-int WinSoft::CreateVBO(Vertex* vertices, int length)
-{
-	BufferObject* buffer = (BufferObject*)malloc(sizeof(BufferObject));
-	buffer->_length = length;
-	buffer->_data = malloc(sizeof(Vertex)*length);
 
-	Vertex* data = (Vertex*)buffer->_data;
-	for (int i = 0; i < length; ++i)
-	{
-		data[i] = vertices[i];
-	}
-
-	if (!_vboList)
-	{
-		_vboList = (BufferObject*)malloc(sizeof(BufferObject));
-	}
-	else
-	{
-		_vboList = (BufferObject*)realloc(_vboList, sizeof(BufferObject)*(_vboCount+1));
-	}
-
-	_vboList[_vboCount++] = *buffer;
-
-	return _vboCount-1;
-}
-
-int WinSoft::CreateIBO(unsigned int* indices, int length)
-{
-	// TODO:
-	BufferObject* buffer = (BufferObject*)malloc(sizeof(BufferObject));
-	buffer->_length = length;
-	buffer->_data = malloc(sizeof(unsigned int)*length);
-
-	unsigned int* data = (unsigned int*)buffer->_data;
-	for (int i = 0; i < length; ++i)
-	{
-		data[i] = indices[i];
-	}
-
-	if (!_iboList)
-	{
-		_iboList = (BufferObject*)malloc(sizeof(BufferObject));
-	}
-	else
-	{
-		_iboList = (BufferObject*)realloc(_iboList, sizeof(BufferObject)*(_iboCount+1));
-	}
-
-	_iboList[_iboCount++] = *buffer;
-
-	return _iboCount-1;
-}
-
-WinSoft::BufferObject* WinSoft::MapVBO(int id)
-{
-	// TODO: insert return statement here
-	return NULL;
-}
-
-WinSoft::BufferObject* WinSoft::MapIBO(int id)
-{
-	// TODO: insert return statement here
-	return NULL;
-}
-
-void WinSoft::DeleteVBO(int id)
-{
-	// TODO:
-}
-
-void WinSoft::DeleteIBO(int id)
-{
-	// TODO:
-}
 
 void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 {
@@ -682,41 +568,41 @@ void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 				//TODO: Draw all primitive types
 				//TODO: Including points, line lists, triangle lists, triangle fans, etc.
 				Object* object = _objects + id;
-				BufferObject& vbo = _vboList[object->_vbo];
-				BufferObject& ibo = _iboList[object->_ibo];
+				BufferObject* vbo = WinSoft::MapVBO(object->_vbo);
+				BufferObject* ibo = WinSoft::MapIBO(object->_ibo);
 
 				switch (object->_type)
 				{
 				case Primitive::LINE:
 				{
-					for (int i = 0; i < ibo._length - 1; ++i)
+					for (int i = 0; i < ibo->_length - 1; ++i)
 					{
-						unsigned int* index = ((unsigned int*) ibo._data)+i;
-						DrawLine(((Vertex*)vbo._data)[*index], ((Vertex*)vbo._data)[*(index+1)], surface);
+						unsigned int* index = ((unsigned int*) ibo->_data)+i;
+						DrawLine(((Vertex*)vbo->_data)[*index], ((Vertex*)vbo->_data)[*(index+1)], surface);
 					}
 				}
 				break;
 				case Primitive::TRIANGLE:
 				{
-					for (int i = 0; i < ibo._length - 2; i += 2)
+					for (int i = 0; i < ibo->_length - 2; i += 2)
 					{
-						unsigned int* index = ((unsigned int*) ibo._data)+i;
+						unsigned int* index = ((unsigned int*) ibo->_data)+i;
 
-						DrawLine(((Vertex*)vbo._data)[*index], ((Vertex*)vbo._data)[*(index+1)], surface);
-						DrawLine(((Vertex*)vbo._data)[*(index+1)], ((Vertex*)vbo._data)[*(index+2)], surface);
-						DrawLine(((Vertex*)vbo._data)[*(index+2)], ((Vertex*)vbo._data)[*index], surface);
+						DrawLine(((Vertex*)vbo->_data)[*index], ((Vertex*)vbo->_data)[*(index+1)], surface);
+						DrawLine(((Vertex*)vbo->_data)[*(index+1)], ((Vertex*)vbo->_data)[*(index+2)], surface);
+						DrawLine(((Vertex*)vbo->_data)[*(index+2)], ((Vertex*)vbo->_data)[*index], surface);
 					}
 				}
 				break;
 				case Primitive::TRIANGLE_STRIP:
 				{
-					for (int i = 0; i < ibo._length - 2; ++i)
+					for (int i = 0; i < ibo->_length - 2; ++i)
 					{
-						unsigned int* index = ((unsigned int*) ibo._data)+i;
+						unsigned int* index = ((unsigned int*) ibo->_data)+i;
 
-						DrawLine(((Vertex*)vbo._data)[*index], ((Vertex*)vbo._data)[*(index+1)], surface);
-						DrawLine(((Vertex*)vbo._data)[*(index+1)], ((Vertex*)vbo._data)[*(index+2)], surface);
-						DrawLine(((Vertex*)vbo._data)[*(index+2)], ((Vertex*)vbo._data)[*index], surface);
+						DrawLine(((Vertex*)vbo->_data)[*index], ((Vertex*)vbo->_data)[*(index+1)], surface);
+						DrawLine(((Vertex*)vbo->_data)[*(index+1)], ((Vertex*)vbo->_data)[*(index+2)], surface);
+						DrawLine(((Vertex*)vbo->_data)[*(index+2)], ((Vertex*)vbo->_data)[*index], surface);
 					}
 				}
 				break;
@@ -726,6 +612,21 @@ void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 			}
 		}		
 	}
+}
+
+void WinSoft::Startup()
+{
+	if (!_drawQueue)
+	{
+		_drawQueue = (int*)malloc(sizeof(int)*(MAX_OBJECTS + 1));
+		_drawQueue[0] = _drawQueue[MAX_OBJECTS] = NOT_AN_OBJECT;
+	}
+}
+
+void WinSoft::Shutdown()
+{
+	DestroyBuffers();
+	DestroyObjects();
 }
 
 void WinSoft::ToColorNormalized(const WinSoft::Color32& pcolor, WinSoft::FColor32& fcolor)
