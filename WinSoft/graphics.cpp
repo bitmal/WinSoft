@@ -4,9 +4,13 @@
 #include <cmath>
 #include <cstdlib>
 
+WinSoft::BufferObject* _vboList = NULL;
+WinSoft::BufferObject* _iboList = NULL;
 WinSoft::Object* _objects = NULL;
 int*  _drawQueue = NULL;
-int _count = 0;
+int _objectCount = 0;
+int _vboCount = 0;
+int _iboCount = 0;
 
 void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 {
@@ -484,11 +488,11 @@ void WinSoft::FillCircle(Point center, float radius, FColor32 color, Surface sur
 	// TODO:
 }
 
-int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
+int WinSoft::CreateObject(int vbo, int ibo, Primitive type)
 {	
 	// TODO: Should be preallocated block that expands as necessary(dynamic array),
 	// rather than reallocating block after every created object
-	Object* object = (Object*)(_objects ? realloc(_objects, sizeof(Object)*(_count+1)) : malloc(sizeof(Object)));
+	Object* object = (Object*)(_objects ? realloc(_objects, sizeof(Object)*(_objectCount+1)) : malloc(sizeof(Object)));
 
 	if (!object)
 	{
@@ -498,19 +502,19 @@ int WinSoft::CreateObject(Vertex* vertices, int vertexCount, Primitive type)
 	else
 	{
 		_objects = object;
-		object[_count]._vertexCount = vertexCount;
-		object[_count]._type = type;
-		object[_count]._vertices = vertices;
+		object[_objectCount]._vbo = vbo;
+		object[_objectCount]._ibo = ibo;
+		object[_objectCount]._type = type;
 
-		++_count;
+		++_objectCount;
 	}
 
-	return _count-1;
+	return _objectCount-1;
 }
 
-void WinSoft::DrawObject(int id, Surface surface)
+void WinSoft::DrawObject(int id)
 {		
-	if (_count > 0 && id < _count)
+	if (_objectCount > 0 && id < _objectCount)
 	{
 		if (!_drawQueue)
 		{
@@ -536,16 +540,124 @@ void WinSoft::DrawObject(int id, Surface surface)
 
 void WinSoft::DestroyObjects()
 {
-	if (_objects)
+	if (_iboList)
 	{
-		free(_objects);
-		_objects = NULL;
+		for (int i = 0; i < _iboCount; ++i)
+		{			
+			if (_iboList[i]._data)
+			{
+				free(_iboList[i]._data);
+				_iboList[i]._data = NULL;
+			}
+		}
 
+		free(_iboList);
+		_iboList = NULL;
+	}
+
+	if (_vboList)
+	{
+		for (int i = 0; i < _vboCount; ++i)
+		{			
+			if (_vboList[i]._data)
+			{
+				free(_vboList[i]._data);
+				_vboList[i]._data = NULL;
+			}
+		}
+
+		free(_vboList);
+		_vboList = NULL;
+	}
+
+	if (_drawQueue)
+	{
 		free(_drawQueue);
 		_drawQueue = NULL;
 	}
 
-	_count = 0;	
+	if (_objects)
+	{
+		free(_objects);
+		_objects = NULL;		
+	}
+
+	_objectCount = 0;	
+}
+
+int WinSoft::CreateVBO(Vertex* vertices, int length)
+{
+	BufferObject* buffer = (BufferObject*)malloc(sizeof(BufferObject));
+	buffer->_length = length;
+	buffer->_data = malloc(sizeof(Vertex)*length);
+
+	Vertex* data = (Vertex*)buffer->_data;
+	for (int i = 0; i < length; ++i)
+	{
+		data[i] = vertices[i];
+	}
+
+	if (!_vboList)
+	{
+		_vboList = (BufferObject*)malloc(sizeof(BufferObject));
+	}
+	else
+	{
+		_vboList = (BufferObject*)realloc(_vboList, sizeof(BufferObject)*(_vboCount+1));
+	}
+
+	_vboList[_vboCount++] = *buffer;
+
+	return _vboCount-1;
+}
+
+int WinSoft::CreateIBO(unsigned int* indices, int length)
+{
+	// TODO:
+	BufferObject* buffer = (BufferObject*)malloc(sizeof(BufferObject));
+	buffer->_length = length;
+	buffer->_data = malloc(sizeof(unsigned int)*length);
+
+	unsigned int* data = (unsigned int*)buffer->_data;
+	for (int i = 0; i < length; ++i)
+	{
+		data[i] = indices[i];
+	}
+
+	if (!_iboList)
+	{
+		_iboList = (BufferObject*)malloc(sizeof(BufferObject));
+	}
+	else
+	{
+		_iboList = (BufferObject*)realloc(_iboList, sizeof(BufferObject)*(_iboCount+1));
+	}
+
+	_iboList[_iboCount++] = *buffer;
+
+	return _iboCount-1;
+}
+
+WinSoft::BufferObject* WinSoft::MapVBO(int id)
+{
+	// TODO: insert return statement here
+	return NULL;
+}
+
+WinSoft::BufferObject* WinSoft::MapIBO(int id)
+{
+	// TODO: insert return statement here
+	return NULL;
+}
+
+void WinSoft::DeleteVBO(int id)
+{
+	// TODO:
+}
+
+void WinSoft::DeleteIBO(int id)
+{
+	// TODO:
 }
 
 void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
@@ -565,48 +677,46 @@ void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 			
 			_drawQueue[i] = NOT_AN_OBJECT;
 
-			if (_count > 0 && id < _count)
+			if (_objectCount > 0 && id < _objectCount)
 			{
 				//TODO: Draw all primitive types
 				//TODO: Including points, line lists, triangle lists, triangle fans, etc.
 				Object* object = _objects + id;
+				BufferObject& vbo = _vboList[object->_vbo];
+				BufferObject& ibo = _iboList[object->_ibo];
 
 				switch (object->_type)
 				{
 				case Primitive::LINE:
 				{
-					if (object->_vertexCount > 1)
+					for (int i = 0; i < ibo._length - 1; ++i)
 					{
-						for (int i = 0; i < object->_vertexCount - 1; ++i)
-						{
-							DrawLine(object->_vertices[i], object->_vertices[i + 1], surface);
-						}
+						unsigned int* index = ((unsigned int*) ibo._data)+i;
+						DrawLine(((Vertex*)vbo._data)[*index], ((Vertex*)vbo._data)[*(index+1)], surface);
 					}
 				}
 				break;
 				case Primitive::TRIANGLE:
 				{
-					if (object->_vertexCount > 2)
+					for (int i = 0; i < ibo._length - 2; i += 2)
 					{
-						for (int i = 0; i < object->_vertexCount - 2; i += 2)
-						{
-							DrawLine(object->_vertices[i], object->_vertices[i + 1], surface);
-							DrawLine(object->_vertices[i + 1], object->_vertices[i + 2], surface);
-							DrawLine(object->_vertices[i + 2], object->_vertices[i], surface);
-						}
+						unsigned int* index = ((unsigned int*) ibo._data)+i;
+
+						DrawLine(((Vertex*)vbo._data)[*index], ((Vertex*)vbo._data)[*(index+1)], surface);
+						DrawLine(((Vertex*)vbo._data)[*(index+1)], ((Vertex*)vbo._data)[*(index+2)], surface);
+						DrawLine(((Vertex*)vbo._data)[*(index+2)], ((Vertex*)vbo._data)[*index], surface);
 					}
 				}
 				break;
 				case Primitive::TRIANGLE_STRIP:
 				{
-					if (object->_vertexCount > 2)
+					for (int i = 0; i < ibo._length - 2; ++i)
 					{
-						for (int i = 0; i < object->_vertexCount - 2; ++i)
-						{
-							DrawLine(object->_vertices[i], object->_vertices[i + 1], surface);
-							DrawLine(object->_vertices[i + 1], object->_vertices[i + 2], surface);
-							DrawLine(object->_vertices[i + 2], object->_vertices[i], surface);
-						}
+						unsigned int* index = ((unsigned int*) ibo._data)+i;
+
+						DrawLine(((Vertex*)vbo._data)[*index], ((Vertex*)vbo._data)[*(index+1)], surface);
+						DrawLine(((Vertex*)vbo._data)[*(index+1)], ((Vertex*)vbo._data)[*(index+2)], surface);
+						DrawLine(((Vertex*)vbo._data)[*(index+2)], ((Vertex*)vbo._data)[*index], surface);
 					}
 				}
 				break;

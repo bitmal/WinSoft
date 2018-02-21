@@ -50,11 +50,17 @@ namespace WinSoft
 		POINT, LINE, TRIANGLE, TRIANGLE_STRIP, QUAD
 	};
 
+	struct BufferObject
+	{
+		int _length;
+		void* _data;
+	};
+
 	struct Object
 	{
-		Primitive _type;
-		int _vertexCount;
-		Vertex* _vertices;
+		Primitive _type;		
+		int _vbo;
+		int _ibo;
 	};
 
 	struct ColorBorder
@@ -83,9 +89,16 @@ namespace WinSoft
 	void DrawCircle(Point center, float radius, FColor32 color, Surface surface);
 	void FillCircle(Point center, float radius, FColor32 color, Surface surface);
 
-	int CreateObject(Vertex* vertices, int vertexCount, Primitive type);
-	void DrawObject(int id, Surface surface);
+	int CreateObject(int vbo, int ibo, Primitive type);
+	void DrawObject(int id);
 	void DestroyObjects();
+
+	int CreateVBO(Vertex* vertices, int length);
+	int CreateIBO(unsigned int* indices, int length);
+	BufferObject* MapVBO(int id);
+	BufferObject* MapIBO(int id);
+	void DeleteVBO(int id);
+	void DeleteIBO(int id);
 
 	void Draw3D(Draw3DSettings& settings, Surface surface);
 
