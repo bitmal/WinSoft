@@ -527,6 +527,7 @@ void WinSoft::DrawObject(int id, Surface surface)
 			if (_drawQueue[i] == NOT_AN_OBJECT)
 			{
 				_drawQueue[i] = id;
+				_drawQueue[i+1] = NOT_AN_OBJECT;
 				break;
 			}
 		}
@@ -549,11 +550,11 @@ void WinSoft::DestroyObjects()
 
 void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 {
-	if (!settings._drawMode == NORMAL)
+	if (settings._drawMode == NORMAL)
 	{
 
 	}
-	else
+	else if (settings._drawMode == WIREFRAME)
 	{
 		for (int i = 0; i < MAX_OBJECTS; ++i)
 		{
