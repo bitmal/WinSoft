@@ -571,6 +571,12 @@ void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 				BufferObject* vbo = WinSoft::MapVBO(object->_vbo);
 				BufferObject* ibo = WinSoft::MapIBO(object->_ibo);
 
+				if (!vbo || !ibo)
+				{
+					fprintf(stderr, "Associated vertex or index buffer is not available to render object %d: %s:: %s:: %d\n", id, __FILE__, __func__, __LINE__);
+					continue;
+				}
+
 				switch (object->_type)
 				{
 				case Primitive::LINE:
