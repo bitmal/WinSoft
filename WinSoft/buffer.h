@@ -3,8 +3,14 @@
 
 namespace WinSoft
 {
+	enum BufferStatus : int
+	{
+		UNKNOWN, ACTIVE, INVALIDATED
+	};
+
 	struct BufferObject
 	{
+		BufferStatus _status;
 		int _length;
 		void* _data;
 	};
@@ -13,10 +19,12 @@ namespace WinSoft
 	int CreateIBO(unsigned int* indices, int length);
 	BufferObject* MapVBO(int id);
 	BufferObject* MapIBO(int id);
-	void DeleteVBO(int id);
-	void DeleteIBO(int id);
+	void InvalidateVBO(int id);
+	void InvalidateIBO(int id);
+	BufferStatus VBOBufferStatus(int id);
+	BufferStatus IBOBufferStatus(int id);
 
-	void DestroyBuffers();
+	void FlushBufferMemory();
 }
 
 #endif

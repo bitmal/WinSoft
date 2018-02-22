@@ -625,7 +625,7 @@ void WinSoft::Startup()
 
 void WinSoft::Shutdown()
 {
-	DestroyBuffers();
+	FlushBufferMemory();
 	DestroyObjects();
 }
 
