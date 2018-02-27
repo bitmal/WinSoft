@@ -3,9 +3,75 @@
 #include <cmath>
 #include <cstdlib>
 
+void _UpdateIntersections(int objectID);
+
 WinSoft::Object* _objects = NULL;
+WinSoft::ScanLine* _scanLines = NULL;
 int*  _drawQueue = NULL;
 int _objectCount = 0;
+int _scanLineCount = 0;
+
+bool _objectIsDirty = false;
+
+void _UpdateIntersections(int objectID)
+{
+	// object exists
+	if (!WinSoft::ObjectExists(objectID))
+		return;
+
+	WinSoft::Object& object = _objects[objectID];
+	WinSoft::BufferObject* vbo = WinSoft::MapVBO(object._vbo);
+	WinSoft::BufferObject* ibo = WinSoft::MapVBO(object._ibo);
+
+	// for each triangle of the object, calculate each intersection
+	// and insert each into list left to right, top to bottom
+	struct Prim
+	{
+		WinSoft::Vertex* a;
+		WinSoft::Vertex* b;
+		WinSoft::Vertex* c;
+	};	
+
+	int primCount = (ibo->_length - 2) * ibo->_length;
+
+	for (int i = 0; i < primCount; ++i)
+	{
+		Prim prim{};
+		prim.a = &((WinSoft::Vertex*)vbo->_data)[((unsigned int*)ibo->_data)[i * 2]];
+		prim.b = &((WinSoft::Vertex*)vbo->_data)[((unsigned int*)ibo->_data)[i * 2] + 1];
+		prim.c = &((WinSoft::Vertex*)vbo->_data)[((unsigned int*)ibo->_data)[i * 2] + 2];
+
+		// figure out where to place the primitive in the list
+		WinSoft::ScanLine* scanLine = NULL;
+
+		for (int j = 0; j < _scanLineCount; ++j)
+		{
+			WinSoft::ScanLine& line = _scanLines[j];
+			bool onLine = false;
+
+			if (line._vertexCount > 0)
+			{
+
+			}
+		}
+
+		if (scanLine != NULL)
+		{
+
+		}
+		else
+		{
+			if (_scanLines == NULL)
+			{
+
+			}
+			else
+			{
+
+			}
+		}
+	}
+}
 
 void WinSoft::RefreshSurface(WinSoft::Surface surface, WinSoft::FColor32 color)
 {
@@ -488,7 +554,7 @@ int WinSoft::CreateObject(int vbo, int ibo, Primitive type)
 	// TODO: Should be preallocated block that expands as necessary(dynamic array),
 	// rather than reallocating block after every created object
 	Object* object = (Object*)(_objects ? realloc(_objects, sizeof(Object)*(_objectCount+1)) : malloc(sizeof(Object)));
-
+	
 	if (!object)
 	{
 		fprintf(stderr, "%s, %s(), line %d: Failure to (re)allocate block for object(s).\n", __func__, __FILE__, __LINE__);
@@ -500,6 +566,7 @@ int WinSoft::CreateObject(int vbo, int ibo, Primitive type)
 		object[_objectCount]._vbo = vbo;
 		object[_objectCount]._ibo = ibo;
 		object[_objectCount]._type = type;
+		object[_objectCount]._dirty = true;
 
 		++_objectCount;
 	}
@@ -511,8 +578,7 @@ void WinSoft::DrawObject(int id)
 {		
 	if (_objectCount > 0 && id < _objectCount)
 	{	
-		//TODO: Draw all primitive types
-		//TODO: Including points, line lists, triangle lists, triangle fans, etc.
+		//TODO: calculate intersections if object is dirty
 		Object* object = _objects + id;		
 
 		for (int i = 0; i < MAX_OBJECTS; ++i)
@@ -525,6 +591,15 @@ void WinSoft::DrawObject(int id)
 			}
 		}
 	}	
+}
+
+bool WinSoft::ObjectExists(int id)
+{
+	return id > NOT_AN_OBJECT && id < _objectCount;
+}
+
+void WinSoft::SetObjectDirty(int id)
+{
 }
 
 void WinSoft::DestroyObjects()
@@ -550,7 +625,7 @@ void WinSoft::Draw3D(Draw3DSettings& settings, Surface surface)
 {
 	if (settings._drawMode == NORMAL)
 	{
-
+		
 	}
 	else if (settings._drawMode == WIREFRAME)
 	{

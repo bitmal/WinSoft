@@ -15,6 +15,13 @@ namespace WinSoft
 		float _x, _y;
 	};
 
+	struct ScanLine
+	{
+		Vertex* _vertexList = NULL;
+		int _vertexCount;
+		int _line;
+	};
+
 	struct Rect
 	{
 		Point _bottomLeft;
@@ -55,6 +62,7 @@ namespace WinSoft
 		Primitive _type;		
 		int _vbo;
 		int _ibo;
+		bool _dirty;
 	};
 
 	struct ColorBorder
@@ -88,6 +96,8 @@ namespace WinSoft
 
 	int CreateObject(int vbo, int ibo, Primitive type);
 	void DrawObject(int id);
+	bool ObjectExists(int id);
+	void SetObjectDirty(int id);
 	void DestroyObjects();	
 
 	void Draw3D(Draw3DSettings& settings, Surface surface);
